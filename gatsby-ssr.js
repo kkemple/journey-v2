@@ -11,7 +11,7 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
   link: new HttpLink({
     fetch,
-    uri: "https://countries.trevorblades.com"
+    uri: "/.netlify/functions/graphql"
   })
 });
 

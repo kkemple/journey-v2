@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery, gql } from "@apollo/client";
-import { Box, Heading, List, ListItem } from "@chakra-ui/core";
+import { Box, Heading, Text, Link } from "@chakra-ui/core";
 import { Helmet } from "react-helmet";
 import { graphql, useStaticQuery } from "gatsby";
 
@@ -19,12 +19,14 @@ export default function Index() {
 
   const { data, loading, error } = useQuery(gql`
     {
-      country(code: "NZ") {
-        name
-        emoji
-        languages {
-          code
+      listings {
+        id
+        title
+        description
+        url
+        company {
           name
+          url
         }
       }
     }
@@ -41,7 +43,6 @@ export default function Index() {
   }
 
   const { title } = site.siteMetadata;
-  const { emoji, name, languages } = data.country;
   return (
     <>
       <Helmet>
@@ -50,16 +51,21 @@ export default function Index() {
       <Box as="header" py="3" px="4" bg="gray.100">
         {title}
       </Box>
-      <Box p="4">
-        <Heading mb="2">
-          {emoji} {name}
-        </Heading>
-        <List styleType="disc">
-          {languages.map(language => (
-            <ListItem key={language.code}>{language.name}</ListItem>
-          ))}
-        </List>
-      </Box>
+      {data.listings.map(listing => (
+        <Box key={listing.id} p="4">
+          <Heading mb="2">
+            <Link href={listing.url}>{listing.title}</Link>
+          </Heading>
+          <Text>
+            {listing.company.url ? (
+              <Link href={listing.company.url}>{listing.company.name}</Link>
+            ) : (
+              listing.company.name
+            )}
+          </Text>
+          <Text>{listing.description}</Text>
+        </Box>
+      ))}
     </>
   );
 }
