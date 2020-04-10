@@ -47,9 +47,9 @@ const resolvers = {
             id: 1,
             name: "Acme Inc.",
             url: "https://acme.com",
-            listings: []
+            listings: [],
           },
-          contacts: []
+          contacts: [],
         },
         {
           id: 2,
@@ -62,18 +62,18 @@ const resolvers = {
             id: 1,
             name: "Acme Inc.",
             url: "https://acme.com",
-            listings: []
+            listings: [],
           },
-          contacts: []
-        }
+          contacts: [],
+        },
       ];
-    }
-  }
+    },
+  },
 };
 
 const server = new ApolloServer({
   typeDefs,
-  resolvers
+  resolvers,
 });
 
 exports.handler = server.createHandler();

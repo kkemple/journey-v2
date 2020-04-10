@@ -1,22 +1,16 @@
-import React from "react";
-import { useQuery, gql } from "@apollo/client";
-import { Box, Heading, Text, Link } from "@chakra-ui/core";
+import React, { useState } from "react";
+import { useQuery, useApolloClient, gql } from "@apollo/client";
+import { Box, Input, Button, Heading, Text, Link } from "@chakra-ui/core";
 import { Helmet } from "react-helmet";
 import { graphql, useStaticQuery } from "gatsby";
 
-export default function Index() {
-  const { site } = useStaticQuery(
-    graphql`
-      {
-        site {
-          siteMetadata {
-            title
-          }
-        }
-      }
-    `
-  );
+const LOGGED_IN_QUERY = gql`
+  {
+    isLoggedIn @client
+  }
+`;
 
+function JobListings() {
   const { data, loading, error } = useQuery(gql`
     {
       listings {
@@ -42,16 +36,9 @@ export default function Index() {
     );
   }
 
-  const { title } = site.siteMetadata;
   return (
     <>
-      <Helmet>
-        <title>{title}</title>
-      </Helmet>
-      <Box as="header" py="3" px="4" bg="gray.100">
-        {title}
-      </Box>
-      {data.listings.map(listing => (
+      {data.listings.map((listing) => (
         <Box key={listing.id} p="4">
           <Heading mb="2">
             <Link href={listing.url}>{listing.title}</Link>
@@ -66,6 +53,89 @@ export default function Index() {
           <Text>{listing.description}</Text>
         </Box>
       ))}
+    </>
+  );
+}
+
+function LoginForm() {
+  const client = useApolloClient();
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    const response = await fetch("/.netlify/functions/auth", {
+      headers: {
+        Authorization: `Basic ${btoa(
+          `${event.target.email.value}:${event.target.password.value}`
+        )}`,
+      },
+    });
+
+    if (response.ok) {
+      const token = await response.text();
+      localStorage.setItem("journey:token", token);
+      client.writeQuery({
+        query: LOGGED_IN_QUERY,
+        data: { isLoggedIn: true },
+      });
+    }
+
+    // TODO: handle errors
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <Input placeholder="Email" type="email" name="email" />
+      <Input placeholder="Password" type="password" name="password" />
+      <Button type="submit">Log in</Button>
+    </form>
+  );
+}
+
+export default function Index() {
+  const { data, loading, error, client } = useQuery(LOGGED_IN_QUERY);
+
+  const { site } = useStaticQuery(
+    graphql`
+      {
+        site {
+          siteMetadata {
+            title
+          }
+        }
+      }
+    `
+  );
+
+  const { title } = site.siteMetadata;
+  const isLoggedIn = data?.isLoggedIn;
+
+  return (
+    <>
+      <Helmet>
+        <title>{title}</title>
+      </Helmet>
+      <Box as="header" py="3" px="4" bg="gray.100">
+        {title}
+      </Box>
+      {isLoggedIn ? (
+        <>
+          <Button
+            onClick={() => {
+              localStorage.removeItem("journey:token");
+              client.writeQuery({
+                query: LOGGED_IN_QUERY,
+                data: { isLoggedIn: false },
+              });
+            }}
+          >
+            Log Out
+          </Button>
+          <JobListings />
+        </>
+      ) : (
+        <LoginForm />
+      )}
     </>
   );
 }
