@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery, useApolloClient, gql } from "@apollo/client";
+import { useQuery, useApolloClient, gql, useMutation } from "@apollo/client";
 import {
   Box,
   Flex,
@@ -8,10 +8,16 @@ import {
   Stack,
   Heading,
   Text,
+  Textarea,
   Link,
 } from "@chakra-ui/core";
 import { Helmet } from "react-helmet";
 import { graphql, useStaticQuery } from "gatsby";
+import {
+  uniqueNamesGenerator,
+  animals,
+  adjectives,
+} from "unique-names-generator";
 
 const LOGGED_IN_QUERY = gql`
   {
@@ -19,21 +25,36 @@ const LOGGED_IN_QUERY = gql`
   }
 `;
 
-function JobListings() {
-  const { data, loading, error } = useQuery(gql`
-    {
-      listings {
-        id
-        title
-        description
-        url
-        company {
-          name
-          url
-        }
-      }
+const LISTING_FRAGMENT = gql`
+  fragment ListingFragment on Listing {
+    id
+    url
+    title
+    description
+    notes
+  }
+`;
+
+const CREATE_LISTING = gql`
+  mutation CreateListing($input: CreateListingInput!) {
+    createListing(input: $input) {
+      ...ListingFragment
     }
-  `);
+  }
+  ${LISTING_FRAGMENT}
+`;
+
+const JOB_LISTINGS = gql`
+  {
+    listings {
+      ...ListingFragment
+    }
+  }
+  ${LISTING_FRAGMENT}
+`;
+
+function JobListings() {
+  const { data, loading, error } = useQuery(JOB_LISTINGS);
 
   if (loading) return <div>Loading the universe...</div>;
   if (error) {
@@ -52,14 +73,7 @@ function JobListings() {
           <Heading mb="2">
             <Link href={listing.url}>{listing.title}</Link>
           </Heading>
-          <Text>
-            {listing.company.url ? (
-              <Link href={listing.company.url}>{listing.company.name}</Link>
-            ) : (
-              listing.company.name
-            )}
-          </Text>
-          <Text>{listing.description}</Text>
+          {listing.description && <Text>{listing.description}</Text>}
         </Box>
       ))}
     </>
@@ -100,8 +114,7 @@ function LoginForm() {
       <Stack
         p="8"
         rounded="lg"
-        shadow="33px 33px 86px #e6e6e6,
-        -33px -33px 86px #ffffff"
+        shadow="33px 33px 86px #e6e6e6, -33px -33px 86px #ffffff"
         maxW="320px"
         w="full"
         as="form"
@@ -122,6 +135,59 @@ function LoginForm() {
     </Flex>
   );
 }
+
+const CreateJobListing = () => {
+  const [createListing, { loading, error, data }] = useMutation(CREATE_LISTING);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const { title, description, url, notes } = event.target;
+
+    const input = {
+      title:
+        title.value ||
+        uniqueNamesGenerator({
+          dictionaries: [adjectives, animals],
+          length: 2,
+          separator: " ",
+        }),
+      description: description.value,
+      url: url.value,
+      notes: notes.value,
+    };
+
+    createListing({
+      variables: { input },
+      update: (cache, { data }) => {
+        const { listings } = cache.readQuery({ query: JOB_LISTINGS });
+        cache.writeQuery({
+          query: JOB_LISTINGS,
+          data: {
+            listings: [...listings, data.createListing],
+          },
+        });
+      },
+    });
+  };
+
+  return (
+    <Box maxW="480px" w="full" mt="8" mx="4">
+      <Heading mb="4" fontSize="md">
+        Create New Listing
+      </Heading>
+      <Stack as="form" onSubmit={handleSubmit}>
+        <Input type="text" name="title" placeholder="Job Title" />
+        <Input type="text" name="description" placeholder="Job Description" />
+        <Input isRequired type="url" name="url" placeholder="Listing URL" />
+        <Textarea name="notes" placeholder="Notes" />
+        <Button mt="2" mr="auto" isLoading={loading} type="submit">
+          Create Listing
+        </Button>
+      </Stack>
+    </Box>
+  );
+};
 
 export default function Index() {
   const { data, client } = useQuery(LOGGED_IN_QUERY);
@@ -148,17 +214,26 @@ export default function Index() {
       </Helmet>
       {isLoggedIn ? (
         <>
-          <Box as="header" py="3" px="4" bg="gray.100">
-            {title}
-          </Box>
-          <Button
-            onClick={() => {
-              localStorage.removeItem("journey:token");
-              client.resetStore();
-            }}
+          <Flex
+            as="header"
+            justify="space-between"
+            align="center"
+            px="4"
+            bg="gray.100"
+            h="12"
           >
-            Log Out
-          </Button>
+            <Heading fontSize="lg">{title}</Heading>
+            <Button
+              size="sm"
+              onClick={() => {
+                localStorage.removeItem("journey:token");
+                client.resetStore();
+              }}
+            >
+              Log Out
+            </Button>
+          </Flex>
+          <CreateJobListing />
           <JobListings />
         </>
       ) : (

@@ -5,12 +5,23 @@ const typeDefs = gql`
     listings: [Listing!]!
   }
 
+  type Mutation {
+    createListing(input: CreateListingInput!): Listing!
+  }
+
+  input CreateListingInput {
+    title: String!
+    description: String
+    url: String!
+    notes: String
+  }
+
   type Contact {
     id: ID!
     name: String!
     company: Company
     email: String
-    note: String
+    notes: String
   }
 
   type Company {
@@ -24,49 +35,57 @@ const typeDefs = gql`
   type Listing {
     id: ID!
     title: String!
-    description: String!
+    description: String
     url: String!
-    note: String
-    company: Company!
+    notes: String
+    company: Company
     contacts: [Contact!]!
   }
 `;
 
+const mockData = [
+  {
+    id: 1,
+    title: "Software Developer",
+    description:
+      "This candidate should have a strong grasp on developing software",
+    url: "https://myjobboard.com/acme/software-developer.php",
+    note: null,
+    company: {
+      id: 1,
+      name: "Acme Inc.",
+      url: "https://acme.com",
+      listings: [],
+    },
+    contacts: [],
+  },
+  {
+    id: 2,
+    title: "Developer Advocate",
+    description:
+      "This candidate should have a strong grasp on developer advocacy",
+    url: "https://myjobboard.com/acme/developer-advocate.php",
+    note: null,
+    company: {
+      id: 1,
+      name: "Acme Inc.",
+      url: "https://acme.com",
+      listings: [],
+    },
+    contacts: [],
+  },
+];
+
 const resolvers = {
   Query: {
     listings() {
-      return [
-        {
-          id: 1,
-          title: "Software Developer",
-          description:
-            "This candidate should have a strong grasp on developing software",
-          url: "https://myjobboard.com/acme/software-developer.php",
-          note: null,
-          company: {
-            id: 1,
-            name: "Acme Inc.",
-            url: "https://acme.com",
-            listings: [],
-          },
-          contacts: [],
-        },
-        {
-          id: 2,
-          title: "Developer Advocate",
-          description:
-            "This candidate should have a strong grasp on developer advocacy",
-          url: "https://myjobboard.com/acme/developer-advocate.php",
-          note: null,
-          company: {
-            id: 1,
-            name: "Acme Inc.",
-            url: "https://acme.com",
-            listings: [],
-          },
-          contacts: [],
-        },
-      ];
+      return mockData;
+    },
+  },
+  Mutation: {
+    createListing(_, params, context) {
+      console.log(params);
+      return { ...mockData[0], ...params.input, id: 3 };
     },
   },
 };
