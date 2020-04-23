@@ -2,39 +2,22 @@ const Sequelize = require("sequelize");
 const bcrypt = require("bcryptjs");
 const basicAuth = require("basic-auth");
 const jwt = require("jsonwebtoken");
+const { sequelize, User } = require("../db");
 
-const sequelize = new Sequelize(process.env.DB_CONNECTION_STRING, {
-  dialectOptions: {
-    ssl: true,
-  },
-});
+// await sequelize.sync({ force: true });
 
-class User extends Sequelize.Model {}
-User.init(
-  {
-    email: Sequelize.STRING,
-    password: Sequelize.STRING,
-  },
-  {
-    sequelize,
-    modelName: "user",
-  }
-);
+// TODO: implement createUser some day...
+// const salt = bcrypt.genSaltSync(10);
+// const hash = bcrypt.hashSync("password", salt);
+// const user = await User.create({
+//   email: "test@theworst.dev",
+//   password: hash,
+// });
+
+// const count = await User.count();
 
 exports.handler = async (event) => {
   try {
-    await sequelize.authenticate();
-    // await sequelize.sync({ force: true });
-
-    // const salt = bcrypt.genSaltSync(10);
-    // const hash = bcrypt.hashSync("password", salt);
-    // const user = await User.create({
-    //   email: "test@theworst.dev",
-    //   password: hash,
-    // });
-
-    // const count = await User.count();
-
     const { name, pass } = basicAuth(event);
     const user = await User.findOne({
       where: {

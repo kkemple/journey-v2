@@ -114,7 +114,7 @@ function LoginForm() {
       <Stack
         p="8"
         rounded="lg"
-        shadow="33px 33px 86px #e6e6e6, -33px -33px 86px #ffffff"
+        shadow="-16px 16px 32px #ededed, 16px -16px 32px #ffffff"
         maxW="320px"
         w="full"
         as="form"
