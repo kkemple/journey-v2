@@ -1,6 +1,7 @@
 const {
   ApolloServer,
   AuthenticationError,
+  ForbiddenError,
   gql,
 } = require("apollo-server-lambda");
 const { Listing, User } = require("../db");
@@ -13,9 +14,19 @@ const typeDefs = gql`
 
   type Mutation {
     createListing(input: CreateListingInput!): Listing!
+    updateListing(input: UpdateListingInput!): Listing!
+    deleteListing(id: ID!): Listing!
   }
 
   input CreateListingInput {
+    title: String!
+    description: String
+    url: String!
+    notes: String
+  }
+
+  input UpdateListingInput {
+    id: ID!
     title: String!
     description: String
     url: String!
@@ -58,6 +69,36 @@ const resolvers = {
   Mutation: {
     createListing(_, { input }, { user }) {
       return Listing.create({ ...input, userId: user.id });
+    },
+    async updateListing(_, args, { user }) {
+      const { id, ...input } = args.input;
+      const listing = await Listing.findOne({
+        where: {
+          id,
+          userId: user.id,
+        },
+      });
+
+      if (!listing) {
+        throw new ForbiddenError("You do not have access to this listing");
+      }
+
+      return listing.update(input);
+    },
+    async deleteListing(_, { id }, { user }) {
+      const listing = await Listing.findOne({
+        where: {
+          id,
+          userId: user.id,
+        },
+      });
+
+      if (!listing) {
+        throw new ForbiddenError("You do not have access to this listing");
+      }
+
+      await listing.destroy();
+      return listing;
     },
   },
 };

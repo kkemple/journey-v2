@@ -10,6 +10,7 @@ import {
   Text,
   Textarea,
   Link,
+  useToast,
 } from "@chakra-ui/core";
 import { Helmet } from "react-helmet";
 import { graphql, useStaticQuery } from "gatsby";
@@ -44,6 +45,15 @@ const CREATE_LISTING = gql`
   ${LISTING_FRAGMENT}
 `;
 
+const DELETE_LISTING = gql`
+  mutation DeleteListing($id: ID!) {
+    deleteListing(id: $id) {
+      ...ListingFragment
+    }
+  }
+  ${LISTING_FRAGMENT}
+`;
+
 const JOB_LISTINGS = gql`
   {
     listings {
@@ -52,6 +62,48 @@ const JOB_LISTINGS = gql`
   }
   ${LISTING_FRAGMENT}
 `;
+
+function DeleteButton({ id }) {
+  const toast = useToast();
+  const [deleteListing, { loading }] = useMutation(DELETE_LISTING, {
+    variables: { id },
+    onCompleted(data) {
+      toast({
+        title: "Listing deleted",
+        description: `${data.deleteListing.title} was deleted`,
+        status: "success",
+      });
+    },
+    update: (cache, { data }) => {
+      const { listings } = cache.readQuery({
+        query: JOB_LISTINGS,
+      });
+
+      cache.writeQuery({
+        query: JOB_LISTINGS,
+        data: {
+          listings: listings.filter(
+            (listing) => listing.id !== data.deleteListing.id
+          ),
+        },
+      });
+    },
+  });
+
+  return (
+    <Button
+      isDisabled={loading}
+      leftIcon="delete"
+      onClick={() => {
+        if (global.confirm("Are you sure?")) {
+          deleteListing();
+        }
+      }}
+    >
+      Delete
+    </Button>
+  );
+}
 
 function JobListings() {
   const { data, loading, error } = useQuery(JOB_LISTINGS);
@@ -74,6 +126,7 @@ function JobListings() {
             <Link href={listing.url}>{listing.title}</Link>
           </Heading>
           {listing.description && <Text>{listing.description}</Text>}
+          <DeleteButton id={listing.id} />
         </Box>
       ))}
     </>
