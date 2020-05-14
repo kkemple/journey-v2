@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useApolloClient, gql, useMutation } from "@apollo/client";
 import {
   Box,
@@ -8,17 +8,24 @@ import {
   Stack,
   Heading,
   Text,
+  IconButton,
   Textarea,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Modal,
+  ModalHeader,
+  ModalFooter,
+  ModalCloseButton,
+  ModalBody,
+  ModalOverlay,
+  ModalContent,
   Link,
   useToast,
 } from "@chakra-ui/core";
 import { Helmet } from "react-helmet";
 import { graphql, useStaticQuery } from "gatsby";
-import {
-  uniqueNamesGenerator,
-  animals,
-  adjectives,
-} from "unique-names-generator";
 
 const LOGGED_IN_QUERY = gql`
   {
@@ -39,6 +46,15 @@ const LISTING_FRAGMENT = gql`
 const CREATE_LISTING = gql`
   mutation CreateListing($input: CreateListingInput!) {
     createListing(input: $input) {
+      ...ListingFragment
+    }
+  }
+  ${LISTING_FRAGMENT}
+`;
+
+const UPDATE_LISTING = gql`
+  mutation UpdateListing($input: UpdateListingInput!) {
+    updateListing(input: $input) {
       ...ListingFragment
     }
   }
@@ -91,17 +107,63 @@ function DeleteButton({ id }) {
   });
 
   return (
-    <Button
+    <MenuItem
       isDisabled={loading}
-      leftIcon="delete"
       onClick={() => {
         if (global.confirm("Are you sure?")) {
           deleteListing();
         }
       }}
     >
-      Delete
-    </Button>
+      Delete listing
+    </MenuItem>
+  );
+}
+
+function ListingMenu(props) {
+  const toast = useToast();
+  const [modalOpen, setModalOpen] = useState(false);
+
+  function closeModal() {
+    setModalOpen(false);
+  }
+
+  return (
+    <>
+      <Menu>
+        <MenuButton as={IconButton} icon="chevron-down" />
+        <MenuList>
+          <MenuItem onClick={() => setModalOpen(true)}>Update listing</MenuItem>
+          <DeleteButton id={props.listing.id} />
+        </MenuList>
+      </Menu>
+      <Modal isOpen={modalOpen} onClose={closeModal}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Update listing</ModalHeader>
+          <ModalCloseButton />
+          <ListingForm
+            listing={props.listing}
+            buttonText="Save changes"
+            mutation={UPDATE_LISTING}
+            mutationOptions={{
+              onCompleted(data) {
+                closeModal();
+                toast({
+                  title: "Listing updated",
+                  description: `${data.updateListing.title} has been updated`,
+                  status: "success",
+                });
+              },
+            }}
+          >
+            <Button mr="2" onClick={closeModal}>
+              Cancel
+            </Button>
+          </ListingForm>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
 
@@ -122,11 +184,13 @@ function JobListings() {
     <>
       {data.listings.map((listing) => (
         <Box key={listing.id} p="4">
-          <Heading mb="2">
-            <Link href={listing.url}>{listing.title}</Link>
-          </Heading>
+          <Flex align="center" mb="2">
+            <Heading mr="4">
+              <Link href={listing.url}>{listing.title}</Link>
+            </Heading>
+            <ListingMenu listing={listing} />
+          </Flex>
           {listing.description && <Text>{listing.description}</Text>}
-          <DeleteButton id={listing.id} />
         </Box>
       ))}
     </>
@@ -189,8 +253,11 @@ function LoginForm() {
   );
 }
 
-const CreateJobListing = () => {
-  const [createListing, { loading, error, data }] = useMutation(CREATE_LISTING);
+function ListingForm(props) {
+  const [mutate, { loading, error }] = useMutation(
+    props.mutation,
+    props.mutationOptions
+  );
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -198,46 +265,80 @@ const CreateJobListing = () => {
     const { title, description, url, notes } = event.target;
 
     const input = {
-      title:
-        title.value ||
-        uniqueNamesGenerator({
-          dictionaries: [adjectives, animals],
-          length: 2,
-          separator: " ",
-        }),
+      id: props.listing?.id,
+      title: title.value,
       description: description.value,
       url: url.value,
       notes: notes.value,
     };
 
-    createListing({
-      variables: { input },
-      update: (cache, { data }) => {
-        const { listings } = cache.readQuery({ query: JOB_LISTINGS });
-        cache.writeQuery({
-          query: JOB_LISTINGS,
-          data: {
-            listings: [...listings, data.createListing],
-          },
-        });
-      },
-    });
+    mutate({ variables: { input } });
   };
 
+  return (
+    <form ref={props.formRef} onSubmit={handleSubmit}>
+      <ModalBody as={Stack}>
+        {error && <Text color="red.500">{error.message}</Text>}
+        <Input
+          isRequired
+          defaultValue={props.listing?.title}
+          type="text"
+          name="title"
+          placeholder="Job Title"
+        />
+        <Input
+          defaultValue={props.listing?.description}
+          type="text"
+          name="description"
+          placeholder="Job Description"
+        />
+        <Input
+          defaultValue={props.listing?.url}
+          isRequired
+          type="url"
+          name="url"
+          placeholder="Listing URL"
+        />
+        <Textarea
+          defaultValue={props.listing?.notes}
+          name="notes"
+          placeholder="Notes"
+        />
+      </ModalBody>
+      <ModalFooter>
+        {props.children}
+        <Button variantColor="purple" isLoading={loading} type="submit">
+          {props.buttonText}
+        </Button>
+      </ModalFooter>
+    </form>
+  );
+}
+
+const CreateJobListing = () => {
+  const formRef = useRef();
   return (
     <Box maxW="480px" w="full" mt="8" mx="4">
       <Heading mb="4" fontSize="md">
         Create New Listing
       </Heading>
-      <Stack as="form" onSubmit={handleSubmit}>
-        <Input type="text" name="title" placeholder="Job Title" />
-        <Input type="text" name="description" placeholder="Job Description" />
-        <Input isRequired type="url" name="url" placeholder="Listing URL" />
-        <Textarea name="notes" placeholder="Notes" />
-        <Button mt="2" mr="auto" isLoading={loading} type="submit">
-          Create Listing
-        </Button>
-      </Stack>
+      <ListingForm
+        formRef={formRef}
+        buttonText="Create Listing"
+        mutation={CREATE_LISTING}
+        mutationOptions={{
+          onCompleted: () => formRef.current.reset(),
+          update: (cache, { data }) => {
+            const { listings } = cache.readQuery({ query: JOB_LISTINGS });
+            cache.writeQuery({
+              query: JOB_LISTINGS,
+              data: {
+                listings: [data.createListing, ...listings],
+              },
+            });
+          },
+        }}
+      />
     </Box>
   );
 };
@@ -286,8 +387,10 @@ export default function Index() {
               Log Out
             </Button>
           </Flex>
-          <CreateJobListing />
-          <JobListings />
+          <Box maxW="containers.md" mx="auto">
+            <CreateJobListing />
+            <JobListings />
+          </Box>
         </>
       ) : (
         <LoginForm />

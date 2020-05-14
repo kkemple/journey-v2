@@ -63,7 +63,9 @@ const typeDefs = gql`
 const resolvers = {
   Query: {
     listings(_, __, { user }) {
-      return user.getListings();
+      return user.getListings({
+        order: [["id", "desc"]],
+      });
     },
   },
   Mutation: {
