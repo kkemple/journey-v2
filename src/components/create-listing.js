@@ -48,6 +48,7 @@ export default function CreateListing() {
             mutationOptions={{
               onCompleted: closeModal,
               update: (cache, { data }) => {
+                // TODO: update companies too
                 const { listings } = cache.readQuery({ query: GET_LISTINGS });
                 cache.writeQuery({
                   query: GET_LISTINGS,

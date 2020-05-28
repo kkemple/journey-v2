@@ -10,6 +10,7 @@ const jwt = require("jsonwebtoken");
 const typeDefs = gql`
   type Query {
     listings: [Listing!]!
+    companies: [Company!]!
   }
 
   type Mutation {
@@ -70,6 +71,7 @@ const resolvers = {
         order: [["id", "desc"]],
       });
     },
+    companies: () => Company.findAll(),
   },
   Mutation: {
     async createListing(_, args, { user }) {
