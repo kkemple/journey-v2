@@ -10,6 +10,7 @@ import {
   ModalFooter,
   ModalBody,
 } from "@chakra-ui/core";
+import { AnimatePresence, motion } from "framer-motion";
 
 export default function ListingForm(props) {
   const [mutate, { loading, error }] = useMutation(
@@ -79,9 +80,26 @@ export default function ListingForm(props) {
           <option value="new">Create new company</option>
           {/* TODO: loop through existing companies */}
         </Select>
-        {company === "new" && (
-          <Input placeholder="Company name" name="newCompany" />
-        )}
+        <AnimatePresence>
+          {company === "new" && (
+            <motion.div
+              animate={{
+                y: 0,
+                opacity: 1,
+              }}
+              exit={{
+                y: -10,
+                opacity: 0,
+              }}
+              initial={{
+                y: -10,
+                opacity: 0,
+              }}
+            >
+              <Input autoFocus placeholder="Company name" name="newCompany" />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </ModalBody>
       <ModalFooter>
         <Button mr="2" onClick={props.onCancel}>

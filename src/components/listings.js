@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery } from "@apollo/client";
 import { Box, Flex, Heading, Text } from "@chakra-ui/core";
-import { Link } from "gatsby";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { GET_LISTINGS } from "../utils";
 import ListingMenu from "./listing-menu";
@@ -20,21 +20,37 @@ export default function Listings() {
   }
 
   return (
-    <>
+    <AnimatePresence initial={false}>
       {data.listings.map((listing) => (
-        <Box key={listing.id} p="4">
-          <Flex>
-            <ListingMenu listing={listing} />
-            <Box ml="4">
-              <Heading>
-                <Link href={listing.url}>{listing.title}</Link>
-              </Heading>
-              {listing.description && <Text>{listing.description}</Text>}
-              {listing.company && <Text>{listing.company.name}</Text>}
-            </Box>
-          </Flex>
-        </Box>
+        <motion.div
+          animate={{
+            scale: 1,
+            opacity: 1,
+          }}
+          exit={{
+            scale: 0.5,
+            opacity: 0,
+          }}
+          initial={{
+            scale: 0.5,
+            opacity: 0,
+          }}
+          key={listing.id}
+        >
+          <Box p="4">
+            <Flex>
+              <ListingMenu listing={listing} />
+              <Box ml="4">
+                <Heading>
+                  <a href={listing.url}>{listing.title}</a>
+                </Heading>
+                {listing.description && <Text>{listing.description}</Text>}
+                {listing.company && <Text>{listing.company.name}</Text>}
+              </Box>
+            </Flex>
+          </Box>
+        </motion.div>
       ))}
-    </>
+    </AnimatePresence>
   );
 }
