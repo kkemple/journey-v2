@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { useMutation } from "@apollo/client";
 import {
   Input,
   Button,
   Stack,
+  Select,
   Text,
   Textarea,
   ModalFooter,
@@ -16,10 +17,12 @@ export default function ListingForm(props) {
     props.mutationOptions
   );
 
+  const [company, setCompany] = useState("");
+
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    const { title, description, url, notes } = event.target;
+    const { title, description, url, notes, newCompany } = event.target;
 
     const input = {
       id: props.listing?.id,
@@ -29,11 +32,21 @@ export default function ListingForm(props) {
       notes: notes.value,
     };
 
+    if (newCompany) {
+      input.newCompany = newCompany.value;
+    } else if (company) {
+      input.companyId = company;
+    }
+
     mutate({ variables: { input } });
   };
 
+  function handleCompanyChange(event) {
+    setCompany(event.target.value);
+  }
+
   return (
-    <form ref={props.formRef} onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit}>
       <ModalBody as={Stack}>
         {error && <Text color="red.500">{error.message}</Text>}
         <Input
@@ -61,9 +74,19 @@ export default function ListingForm(props) {
           name="notes"
           placeholder="Notes"
         />
+        <Select value={company} onChange={handleCompanyChange}>
+          <option>Select a company</option>
+          <option value="new">Create new company</option>
+          {/* TODO: loop through existing companies */}
+        </Select>
+        {company === "new" && (
+          <Input placeholder="Company name" name="newCompany" />
+        )}
       </ModalBody>
       <ModalFooter>
-        {props.children}
+        <Button mr="2" onClick={props.onCancel}>
+          Cancel
+        </Button>
         <Button variantColor="purple" isLoading={loading} type="submit">
           {props.buttonText}
         </Button>

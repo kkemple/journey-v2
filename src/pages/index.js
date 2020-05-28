@@ -45,7 +45,12 @@ export default function Index() {
             bg="gray.100"
             h="12"
           >
-            <Heading fontSize="lg">{title}</Heading>
+            <Flex align="center">
+              <Heading fontSize="lg" mr={4}>
+                {title}
+              </Heading>
+              <CreateListing />
+            </Flex>
             <Button
               size="sm"
               onClick={() => {
@@ -57,7 +62,6 @@ export default function Index() {
             </Button>
           </Flex>
           <Box maxW="containers.md" mx="auto">
-            <CreateListing />
             <Listings />
           </Box>
         </>

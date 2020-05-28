@@ -1,6 +1,4 @@
-import React from "react";
 import {
-  ApolloProvider,
   ApolloClient,
   ApolloLink,
   HttpLink,
@@ -39,6 +37,4 @@ const client = new ApolloClient({
   },
 });
 
-export const wrapRootElement = ({ element }) => (
-  <ApolloProvider client={client}>{element}</ApolloProvider>
-);
+export default client;

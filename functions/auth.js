@@ -4,19 +4,17 @@ const basicAuth = require("basic-auth");
 const jwt = require("jsonwebtoken");
 const { sequelize, User } = require("../db");
 
-// await sequelize.sync({ force: true });
-
-// TODO: implement createUser some day...
-// const salt = bcrypt.genSaltSync(10);
-// const hash = bcrypt.hashSync("password", salt);
-// const user = await User.create({
-//   email: "test@theworst.dev",
-//   password: hash,
-// });
-
-// const count = await User.count();
-
 exports.handler = async (event) => {
+  // this is a hack to reset DB and create a test user
+  // await sequelize.sync({ force: true });
+
+  // const salt = bcrypt.genSaltSync(10);
+  // const hash = bcrypt.hashSync("password", salt);
+  // const user = await User.create({
+  //   email: "test@theworst.dev",
+  //   password: hash,
+  // });
+
   try {
     const { name, pass } = basicAuth(event);
     const user = await User.findOne({

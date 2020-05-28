@@ -7,6 +7,9 @@ export const LISTING_FRAGMENT = gql`
     title
     description
     notes
+    company {
+      name
+    }
   }
 `;
 

@@ -23,13 +23,16 @@ export default function Listings() {
     <>
       {data.listings.map((listing) => (
         <Box key={listing.id} p="4">
-          <Flex align="center" mb="2">
-            <Heading mr="4">
-              <Link href={listing.url}>{listing.title}</Link>
-            </Heading>
+          <Flex>
             <ListingMenu listing={listing} />
+            <Box ml="4">
+              <Heading>
+                <Link href={listing.url}>{listing.title}</Link>
+              </Heading>
+              {listing.description && <Text>{listing.description}</Text>}
+              {listing.company && <Text>{listing.company.name}</Text>}
+            </Box>
           </Flex>
-          {listing.description && <Text>{listing.description}</Text>}
         </Box>
       ))}
     </>

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { gql, useMutation } from "@apollo/client";
 import {
-  Button,
   Menu,
   MenuButton,
   MenuList,
@@ -99,6 +98,7 @@ export default function ListingMenu(props) {
           <ModalHeader>Update listing</ModalHeader>
           <ModalCloseButton />
           <ListingForm
+            onCancel={closeModal}
             listing={props.listing}
             buttonText="Save changes"
             mutation={UPDATE_LISTING}
@@ -112,11 +112,7 @@ export default function ListingMenu(props) {
                 });
               },
             }}
-          >
-            <Button mr="2" onClick={closeModal}>
-              Cancel
-            </Button>
-          </ListingForm>
+          />
         </ModalContent>
       </Modal>
     </>
