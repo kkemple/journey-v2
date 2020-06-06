@@ -7,7 +7,7 @@
     "@chakra-ui/core": "^0.7.0",
     "@emotion/core": "^10.0.28",
     "@emotion/styled": "^10.0.27",
-    "apollo-server-lambda": "^2.11.0",
+    "apollo-server-lambda": "^2.14.2",
     "basic-auth": "^2.0.1",
     "bcryptjs": "^2.4.3",
     "emotion-theming": "^10.0.27",
