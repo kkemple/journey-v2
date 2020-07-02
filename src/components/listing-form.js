@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { useMutation, gql, useQuery } from "@apollo/client";
 import {
+  Box,
   Input,
   Button,
   Stack,
+  Flex,
+  FormLabel,
   Select,
   Text,
   Textarea,
@@ -13,27 +16,25 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import CompanySelect from "./company-select";
 
-function CreateOrSelectCompany() {
+function CreateOrSelectCompany(props) {
   const [companyId, setCompanyId] = useState("");
 
   function handleCompanyChange(event) {
     setCompanyId(event.target.value);
   }
 
-  const isCreatingCompany = companyId === "new";
   return (
-    <>
-      <CompanySelect
-        name="companyId"
-        value={companyId}
-        onChange={handleCompanyChange}
-        mb={isCreatingCompany ? 2 : 0}
-      >
-        <option>Select a company</option>
-        <option value="new">Create new company</option>
-      </CompanySelect>
-      <AnimatePresence>
-        {isCreatingCompany && (
+    <AnimatePresence>
+      <Stack {...props}>
+        <CompanySelect
+          name="companyId"
+          value={companyId}
+          onChange={handleCompanyChange}
+        >
+          <option>Select a company</option>
+          <option value="new">Create new company</option>
+        </CompanySelect>
+        {companyId === "new" && (
           <motion.div
             animate={{
               y: 0,
@@ -51,12 +52,25 @@ function CreateOrSelectCompany() {
             <Input autoFocus placeholder="Company name" name="newCompany" />
           </motion.div>
         )}
-      </AnimatePresence>
-    </>
+      </Stack>
+    </AnimatePresence>
+  );
+}
+
+function ContactForm({ onRemove, ...props }) {
+  return (
+    <Stack {...props}>
+      <Input placeholder="Contact name" name="contactName[]" />
+      <Textarea placeholder="Contact notes" name="contactNotes[]" />
+      <Button size="sm" onClick={onRemove}>
+        Remove contact
+      </Button>
+    </Stack>
   );
 }
 
 export default function ListingForm(props) {
+  const [contactForms, setContactForms] = useState([Date.now()]);
   const [mutate, { loading, error }] = useMutation(
     props.mutation,
     props.mutationOptions
@@ -72,7 +86,14 @@ export default function ListingForm(props) {
       notes,
       newCompany,
       companyId,
+      ["contactName[]"]: contactNames,
+      ["contactNotes[]"]: contactNotes,
     } = event.target;
+
+    const contacts = Array.from(contactNames || []).map((name, index) => ({
+      name: name.value,
+      notes: contactNotes[index].value,
+    }));
 
     const input = {
       id: props.listing?.id,
@@ -80,6 +101,7 @@ export default function ListingForm(props) {
       description: description.value,
       url: url.value,
       notes: notes.value,
+      contacts,
     };
 
     if (newCompany) {
@@ -90,6 +112,10 @@ export default function ListingForm(props) {
 
     mutate({ variables: { input } });
   };
+
+  function addContactForm() {
+    setContactForms((prevContactForms) => [...prevContactForms, Date.now()]);
+  }
 
   return (
     <form onSubmit={handleSubmit}>
@@ -121,6 +147,22 @@ export default function ListingForm(props) {
           placeholder="Notes"
         />
         <CreateOrSelectCompany />
+        <Flex align="center" justify="space-between">
+          <FormLabel>Contacts</FormLabel>
+          <Button size="sm" onClick={addContactForm}>
+            Add contact
+          </Button>
+        </Flex>
+        {contactForms.map((id) => (
+          <ContactForm
+            key={id}
+            onRemove={() => {
+              setContactForms((prevContactForms) =>
+                prevContactForms.filter((contactForm) => contactForm !== id)
+              );
+            }}
+          />
+        ))}
       </ModalBody>
       <ModalFooter>
         <Button mr="2" onClick={props.onCancel}>
