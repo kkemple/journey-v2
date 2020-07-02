@@ -11,18 +11,9 @@ import {
   ModalBody,
 } from "@chakra-ui/core";
 import { AnimatePresence, motion } from "framer-motion";
+import CompanySelect from "./company-select";
 
-const GET_COMPANIES = gql`
-  query GetCompanies {
-    companies {
-      id
-      name
-    }
-  }
-`;
-
-function CompanySelect() {
-  const { data, loading, error } = useQuery(GET_COMPANIES);
+function CreateOrSelectCompany() {
   const [companyId, setCompanyId] = useState("");
 
   function handleCompanyChange(event) {
@@ -32,8 +23,7 @@ function CompanySelect() {
   const isCreatingCompany = companyId === "new";
   return (
     <>
-      <Select
-        isDisabled={loading || error}
+      <CompanySelect
         name="companyId"
         value={companyId}
         onChange={handleCompanyChange}
@@ -41,12 +31,7 @@ function CompanySelect() {
       >
         <option>Select a company</option>
         <option value="new">Create new company</option>
-        {data?.companies.map((company) => (
-          <option key={company.id} value={company.id}>
-            {company.name}
-          </option>
-        ))}
-      </Select>
+      </CompanySelect>
       <AnimatePresence>
         {isCreatingCompany && (
           <motion.div
@@ -135,7 +120,7 @@ export default function ListingForm(props) {
           name="notes"
           placeholder="Notes"
         />
-        <CompanySelect />
+        <CreateOrSelectCompany />
       </ModalBody>
       <ModalFooter>
         <Button mr="2" onClick={props.onCancel}>

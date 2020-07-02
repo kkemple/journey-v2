@@ -9,6 +9,7 @@ export const LISTING_FRAGMENT = gql`
     notes
     company {
       name
+      id
     }
   }
 `;
