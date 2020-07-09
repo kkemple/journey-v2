@@ -1,11 +1,64 @@
 import React, { useState } from "react";
 import { useQuery } from "@apollo/client";
-import { Box, Flex, Heading, Text, Select, FormLabel } from "@chakra-ui/core";
+import {
+  Box,
+  Flex,
+  Heading,
+  Text,
+  Select,
+  Stack,
+  FormLabel,
+  Tag,
+  TagLabel,
+  TagCloseButton,
+} from "@chakra-ui/core";
 import { AnimatePresence, motion } from "framer-motion";
+import { gql, useMutation } from "@apollo/client";
 
 import { GET_LISTINGS } from "../utils";
 import ListingMenu from "./listing-menu";
 import CompanySelect from "./company-select";
+
+const REMOVE_CONTACT = gql`
+  mutation RemoveContact($input: RemoveContactInput!) {
+    removeContact(input: $input) {
+      contact {
+        id
+      }
+      listingId
+    }
+  }
+`;
+
+function RemoveContactButton(props) {
+  const [removeContact, { loading }] = useMutation(REMOVE_CONTACT, {
+    variables: {
+      input: props.input,
+    },
+    update(cache, { data }) {
+      const { listings } = cache.readQuery({
+        query: GET_LISTINGS,
+      });
+      cache.writeQuery({
+        query: GET_LISTINGS,
+        data: {
+          listings: listings.map((listing) => {
+            if (listing.id === data.removeContact.listingId) {
+              return {
+                ...listing,
+                contacts: listing.contacts.filter(
+                  (contact) => contact.id !== data.removeContact.contact.id
+                ),
+              };
+            }
+            return listing;
+          }),
+        },
+      });
+    },
+  });
+  return <TagCloseButton isDisabled={loading} onClick={removeContact} />;
+}
 
 export default function Listings() {
   const { data, loading, error } = useQuery(GET_LISTINGS);
@@ -61,6 +114,27 @@ export default function Listings() {
                     </Heading>
                     {listing.description && <Text>{listing.description}</Text>}
                     {listing.company && <Text>{listing.company.name}</Text>}
+                    {!!listing.contacts.length && (
+                      <Stack isInline as="ul" flexWrap="wrap">
+                        {listing.contacts.map((contact) => (
+                          <Tag
+                            key={contact.id}
+                            rounded="full"
+                            variant="solid"
+                            variantColor="purple"
+                            my="1"
+                          >
+                            <TagLabel>{contact.name}</TagLabel>
+                            <RemoveContactButton
+                              input={{
+                                id: contact.id,
+                                listingId: listing.id,
+                              }}
+                            />
+                          </Tag>
+                        ))}
+                      </Stack>
+                    )}
                   </Box>
                 </Flex>
               </Box>

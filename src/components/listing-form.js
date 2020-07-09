@@ -31,7 +31,7 @@ function CreateOrSelectCompany(props) {
           value={companyId}
           onChange={handleCompanyChange}
         >
-          <option>Select a company</option>
+          <option value="">Select a company</option>
           <option value="new">Create new company</option>
         </CompanySelect>
         {companyId === "new" && (
@@ -69,6 +69,24 @@ function ContactForm({ onRemove, ...props }) {
   );
 }
 
+function getContacts(names, notes) {
+  if (!names) {
+    return [];
+  }
+
+  return names instanceof RadioNodeList
+    ? Array.from(names).map((name, index) => ({
+        name: name.value,
+        notes: notes[index].value,
+      }))
+    : [
+        {
+          name: names.value,
+          notes: notes.value,
+        },
+      ];
+}
+
 export default function ListingForm(props) {
   const [contactForms, setContactForms] = useState([Date.now()]);
   const [mutate, { loading, error }] = useMutation(
@@ -90,18 +108,13 @@ export default function ListingForm(props) {
       ["contactNotes[]"]: contactNotes,
     } = event.target;
 
-    const contacts = Array.from(contactNames || []).map((name, index) => ({
-      name: name.value,
-      notes: contactNotes[index].value,
-    }));
-
     const input = {
       id: props.listing?.id,
       title: title.value,
       description: description.value,
       url: url.value,
       notes: notes.value,
-      contacts,
+      contacts: getContacts(contactNames, contactNotes),
     };
 
     if (newCompany) {

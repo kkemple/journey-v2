@@ -11,6 +11,11 @@ export const LISTING_FRAGMENT = gql`
       name
       id
     }
+    contacts {
+      id
+      name
+      notes
+    }
   }
 `;
 

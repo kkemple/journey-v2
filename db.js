@@ -18,7 +18,27 @@ User.init(
   }
 );
 
-class Listing extends Sequelize.Model {}
+class Contact extends Sequelize.Model {}
+Contact.init(
+  {
+    name: Sequelize.STRING,
+    notes: Sequelize.TEXT,
+  },
+  {
+    sequelize,
+    modelName: "contact",
+  }
+);
+
+class Listing extends Sequelize.Model {
+  async createAndAddContacts(contactsInput) {
+    const contacts = await Contact.bulkCreate(contactsInput, {
+      returning: true,
+    });
+    return this.addContacts(contacts);
+  }
+}
+
 Listing.init(
   {
     title: Sequelize.STRING,
@@ -35,20 +55,8 @@ Listing.init(
 Listing.belongsTo(User);
 User.hasMany(Listing);
 
-class Contact extends Sequelize.Model {}
-Contact.init(
-  {
-    name: Sequelize.STRING,
-    notes: Sequelize.TEXT,
-  },
-  {
-    sequelize,
-    modelName: "contact",
-  }
-);
-
-Listing.belongsToMany(Contact, "listing_contacts");
-Contact.belongsToMany(Listing, "listing_contacts");
+Listing.belongsToMany(Contact, { through: "listing_contacts" });
+Contact.belongsToMany(Listing, { through: "listing_contacts" });
 
 class Company extends Sequelize.Model {}
 Company.init(
@@ -63,6 +71,8 @@ Company.init(
 
 Listing.belongsTo(Company);
 Company.hasMany(Listing);
+
+// sequelize.sync();
 
 exports.sequelize = sequelize;
 exports.User = User;
