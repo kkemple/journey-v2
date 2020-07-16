@@ -1,16 +1,6 @@
-import React, { useState } from "react";
-import { useMutation, gql, useQuery } from "@apollo/client";
-import {
-  Input,
-  Button,
-  Stack,
-  Select,
-  Text,
-  Textarea,
-  ModalFooter,
-  ModalBody,
-} from "@chakra-ui/core";
-import { AnimatePresence, motion } from "framer-motion";
+import React from "react";
+import { gql, useQuery } from "@apollo/client";
+import { Select } from "@chakra-ui/core";
 
 const GET_COMPANIES = gql`
   query GetCompanies {

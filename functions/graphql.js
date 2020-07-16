@@ -11,6 +11,7 @@ const typeDefs = gql`
   type Query {
     listings: [Listing!]!
     companies: [Company!]!
+    contacts: [Contact!]!
   }
 
   type Mutation {
@@ -91,6 +92,7 @@ const resolvers = {
       });
     },
     companies: () => Company.findAll(),
+    contacts: (_, __, { user }) => user.getContacts(),
   },
   Mutation: {
     async removeContact(_, { input }, { user }) {

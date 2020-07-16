@@ -30,12 +30,20 @@ Contact.init(
   }
 );
 
+Contact.belongsTo(User);
+User.hasMany(Contact);
+
 class Listing extends Sequelize.Model {
   async createAndAddContacts(contactsInput) {
     const contacts = await Contact.bulkCreate(contactsInput, {
       returning: true,
     });
-    return this.addContacts(contacts);
+
+    const user = await this.getUser();
+    return Promise.all([
+      user.addContacts(contacts),
+      this.addContacts(contacts),
+    ]);
   }
 }
 
@@ -72,7 +80,7 @@ Company.init(
 Listing.belongsTo(Company);
 Company.hasMany(Listing);
 
-// sequelize.sync();
+sequelize.sync();
 
 exports.sequelize = sequelize;
 exports.User = User;

@@ -3,61 +3,105 @@ import { useQuery } from "@apollo/client";
 import {
   Box,
   Flex,
+  Button,
   Heading,
   Text,
-  Select,
   Stack,
   FormLabel,
   Tag,
   TagLabel,
-  TagCloseButton,
+  Modal,
+  ModalBody,
+  ModalHeader,
+  ModalFooter,
+  ModalOverlay,
+  ModalContent,
+  ModalCloseButton,
+  useDisclosure,
+  Input,
+  Textarea,
 } from "@chakra-ui/core";
 import { AnimatePresence, motion } from "framer-motion";
-import { gql, useMutation } from "@apollo/client";
-
 import { GET_LISTINGS } from "../utils";
 import ListingMenu from "./listing-menu";
 import CompanySelect from "./company-select";
+import ContactSelect from "./contact-select";
+import RemoveContactButton from "./remove-contact-button";
 
-const REMOVE_CONTACT = gql`
-  mutation RemoveContact($input: RemoveContactInput!) {
-    removeContact(input: $input) {
-      contact {
-        id
-      }
-      listingId
-    }
+function CreateOrSelectContact(props) {
+  const [contactId, setContactId] = useState("");
+
+  function handleContactChange(event) {
+    setContactId(event.target.value);
   }
-`;
 
-function RemoveContactButton(props) {
-  const [removeContact, { loading }] = useMutation(REMOVE_CONTACT, {
-    variables: {
-      input: props.input,
-    },
-    update(cache, { data }) {
-      const { listings } = cache.readQuery({
-        query: GET_LISTINGS,
-      });
-      cache.writeQuery({
-        query: GET_LISTINGS,
-        data: {
-          listings: listings.map((listing) => {
-            if (listing.id === data.removeContact.listingId) {
-              return {
-                ...listing,
-                contacts: listing.contacts.filter(
-                  (contact) => contact.id !== data.removeContact.contact.id
-                ),
-              };
-            }
-            return listing;
-          }),
-        },
-      });
-    },
-  });
-  return <TagCloseButton isDisabled={loading} onClick={removeContact} />;
+  return (
+    <AnimatePresence>
+      <Stack {...props}>
+        <ContactSelect
+          name="contactId"
+          value={contactId}
+          onChange={handleContactChange}
+        >
+          <option value="">Select a contact</option>
+          <option value="new">Create new contact</option>
+        </ContactSelect>
+        {contactId === "new" && (
+          <motion.div
+            animate={{
+              y: 0,
+              opacity: 1,
+            }}
+            exit={{
+              y: -10,
+              opacity: 0,
+            }}
+            initial={{
+              y: -10,
+              opacity: 0,
+            }}
+          >
+            <Stack {...props}>
+              <Input placeholder="Contact name" name="name" />
+              <Textarea placeholder="Contact notes" name="notes" />
+            </Stack>
+          </motion.div>
+        )}
+      </Stack>
+    </AnimatePresence>
+  );
+}
+
+function AddContactButton(props) {
+  const { isOpen, onClose, onOpen } = useDisclosure();
+  return (
+    <>
+      <Button
+        my="1"
+        rounded="full"
+        variant="outline"
+        variantColor="purple"
+        size="sm"
+        fontSize="md"
+        onClick={onOpen}
+      >
+        Add contact
+      </Button>
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Add a contact</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <CreateOrSelectContact />
+          </ModalBody>
+          <ModalFooter>
+            <Button>Add contact</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
+  );
 }
 
 export default function Listings() {
@@ -133,6 +177,7 @@ export default function Listings() {
                             />
                           </Tag>
                         ))}
+                        <AddContactButton />
                       </Stack>
                     )}
                   </Box>
