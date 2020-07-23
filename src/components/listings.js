@@ -105,28 +105,26 @@ export default function Listings() {
                     </Heading>
                     {listing.description && <Text>{listing.description}</Text>}
                     {listing.company && <Text>{listing.company.name}</Text>}
-                    {!!listing.contacts.length && (
-                      <Stack isInline as="ul" flexWrap="wrap">
-                        {listing.contacts.map((contact) => (
-                          <Tag
-                            key={contact.id}
-                            rounded="full"
-                            variant="solid"
-                            variantColor="purple"
-                            my="1"
-                          >
-                            <TagLabel>{contact.name}</TagLabel>
-                            <RemoveContactButton
-                              input={{
-                                id: contact.id,
-                                listingId: listing.id,
-                              }}
-                            />
-                          </Tag>
-                        ))}
-                        <AddContactButton listingId={listing.id} />
-                      </Stack>
-                    )}
+                    <Stack isInline as="ul" flexWrap="wrap">
+                      {listing.contacts.map((contact) => (
+                        <Tag
+                          key={contact.id}
+                          rounded="full"
+                          variant="solid"
+                          variantColor="purple"
+                          my="1"
+                        >
+                          <TagLabel>{contact.name}</TagLabel>
+                          <RemoveContactButton
+                            input={{
+                              id: contact.id,
+                              listingId: listing.id,
+                            }}
+                          />
+                        </Tag>
+                      ))}
+                      <AddContactButton listingId={listing.id} />
+                    </Stack>
                   </Box>
                 </Flex>
               </Box>

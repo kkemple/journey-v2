@@ -20,6 +20,7 @@ const typeDefs = gql`
     deleteListing(id: ID!): Listing!
     createContact(input: CreateContactInput!): ListingContact!
     removeContact(input: RemoveContactInput!): ListingContact!
+    addContactToListing(contactId: ID!, listingId: ID!): ListingContact!
   }
 
   input CreateListingInput {
@@ -106,6 +107,36 @@ const resolvers = {
       return {
         contact,
         listingId,
+      };
+    },
+    async addContactToListing(_, { listingId, contactId }, { user }) {
+      const listing = await Listing.findOne({
+        where: {
+          id: listingId,
+          userId: user.id,
+        },
+      });
+
+      if (!listing) {
+        throw new ForbiddenError("You do not have access to this listing");
+      }
+
+      const contact = await Contact.findOne({
+        where: {
+          id: contactId,
+          userId: user.id,
+        },
+      });
+
+      if (!contact) {
+        throw new ForbiddenError("You do not have access to this contact");
+      }
+
+      await listing.addContact(contact);
+
+      return {
+        listingId: listing.id,
+        contact,
       };
     },
     async removeContact(_, { input }, { user }) {
