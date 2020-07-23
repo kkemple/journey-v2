@@ -33,20 +33,7 @@ Contact.init(
 Contact.belongsTo(User);
 User.hasMany(Contact);
 
-class Listing extends Sequelize.Model {
-  async createAndAddContacts(contactsInput) {
-    const contacts = await Contact.bulkCreate(contactsInput, {
-      returning: true,
-    });
-
-    const user = await this.getUser();
-    return Promise.all([
-      user.addContacts(contacts),
-      this.addContacts(contacts),
-    ]);
-  }
-}
-
+class Listing extends Sequelize.Model {}
 Listing.init(
   {
     title: Sequelize.STRING,

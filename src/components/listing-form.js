@@ -1,13 +1,9 @@
 import React, { useState } from "react";
-import { useMutation, gql, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import {
-  Box,
   Input,
   Button,
   Stack,
-  Flex,
-  FormLabel,
-  Select,
   Text,
   Textarea,
   ModalFooter,
@@ -57,38 +53,7 @@ function CreateOrSelectCompany(props) {
   );
 }
 
-function ContactForm({ onRemove, ...props }) {
-  return (
-    <Stack {...props}>
-      <Input placeholder="Contact name" name="contactName[]" />
-      <Textarea placeholder="Contact notes" name="contactNotes[]" />
-      <Button size="sm" onClick={onRemove}>
-        Remove contact
-      </Button>
-    </Stack>
-  );
-}
-
-function getContacts(names, notes) {
-  if (!names) {
-    return [];
-  }
-
-  return names instanceof RadioNodeList
-    ? Array.from(names).map((name, index) => ({
-        name: name.value,
-        notes: notes[index].value,
-      }))
-    : [
-        {
-          name: names.value,
-          notes: notes.value,
-        },
-      ];
-}
-
 export default function ListingForm(props) {
-  const [contactForms, setContactForms] = useState([Date.now()]);
   const [mutate, { loading, error }] = useMutation(
     props.mutation,
     props.mutationOptions
@@ -104,8 +69,6 @@ export default function ListingForm(props) {
       notes,
       newCompany,
       companyId,
-      ["contactName[]"]: contactNames,
-      ["contactNotes[]"]: contactNotes,
     } = event.target;
 
     const input = {
@@ -114,7 +77,6 @@ export default function ListingForm(props) {
       description: description.value,
       url: url.value,
       notes: notes.value,
-      contacts: getContacts(contactNames, contactNotes),
     };
 
     if (newCompany) {
@@ -125,10 +87,6 @@ export default function ListingForm(props) {
 
     mutate({ variables: { input } });
   };
-
-  function addContactForm() {
-    setContactForms((prevContactForms) => [...prevContactForms, Date.now()]);
-  }
 
   return (
     <form onSubmit={handleSubmit}>
@@ -160,22 +118,6 @@ export default function ListingForm(props) {
           placeholder="Notes"
         />
         <CreateOrSelectCompany />
-        <Flex align="center" justify="space-between">
-          <FormLabel>Contacts</FormLabel>
-          <Button size="sm" onClick={addContactForm}>
-            Add contact
-          </Button>
-        </Flex>
-        {contactForms.map((id) => (
-          <ContactForm
-            key={id}
-            onRemove={() => {
-              setContactForms((prevContactForms) =>
-                prevContactForms.filter((contactForm) => contactForm !== id)
-              );
-            }}
-          />
-        ))}
       </ModalBody>
       <ModalFooter>
         <Button mr="2" onClick={props.onCancel}>

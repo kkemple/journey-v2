@@ -29,7 +29,6 @@ const typeDefs = gql`
     notes: String
     newCompany: String
     companyId: ID
-    contacts: [ContactInput!]!
   }
 
   input UpdateListingInput {
@@ -40,7 +39,6 @@ const typeDefs = gql`
     notes: String
     newCompany: String
     companyId: ID
-    contacts: [ContactInput!]!
   }
 
   input CreateContactInput {
@@ -52,11 +50,6 @@ const typeDefs = gql`
   input RemoveContactInput {
     id: ID!
     listingId: ID!
-  }
-
-  input ContactInput {
-    name: String!
-    notes: String!
   }
 
   type Contact {
@@ -136,7 +129,7 @@ const resolvers = {
       return { contact, listingId };
     },
     async createListing(_, args, { user }) {
-      const { newCompany, contacts, ...input } = args.input;
+      const { newCompany, ...input } = args.input;
 
       if (newCompany) {
         const company = await Company.create({ name: newCompany });
@@ -148,14 +141,10 @@ const resolvers = {
         userId: user.id,
       });
 
-      if (contacts.length) {
-        await listing.createAndAddContacts(contacts);
-      }
-
       return listing;
     },
     async updateListing(_, args, { user }) {
-      const { id, contacts, ...input } = args.input;
+      const { id, ...input } = args.input;
       const listing = await Listing.findOne({
         where: {
           id,
@@ -165,10 +154,6 @@ const resolvers = {
 
       if (!listing) {
         throw new ForbiddenError("You do not have access to this listing");
-      }
-
-      if (contacts.length) {
-        await listing.createAndAddContacts(contacts);
       }
 
       return listing.update(input);
