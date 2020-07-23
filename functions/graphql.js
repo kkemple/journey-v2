@@ -18,7 +18,8 @@ const typeDefs = gql`
     createListing(input: CreateListingInput!): Listing!
     updateListing(input: UpdateListingInput!): Listing!
     deleteListing(id: ID!): Listing!
-    removeContact(input: RemoveContactInput!): RemoveContact!
+    createContact(input: CreateContactInput!): ListingContact!
+    removeContact(input: RemoveContactInput!): ListingContact!
   }
 
   input CreateListingInput {
@@ -42,6 +43,12 @@ const typeDefs = gql`
     contacts: [ContactInput!]!
   }
 
+  input CreateContactInput {
+    name: String!
+    notes: String!
+    listingId: ID!
+  }
+
   input RemoveContactInput {
     id: ID!
     listingId: ID!
@@ -58,7 +65,7 @@ const typeDefs = gql`
     notes: String!
   }
 
-  type RemoveContact {
+  type ListingContact {
     contact: Contact!
     listingId: ID!
   }
@@ -95,6 +102,19 @@ const resolvers = {
     contacts: (_, __, { user }) => user.getContacts(),
   },
   Mutation: {
+    async createContact(_, { input }, { user }) {
+      const { listingId, ...rest } = input;
+      const contact = await Contact.create({
+        ...rest,
+        userId: user.id,
+      });
+
+      await contact.addListing(listingId);
+      return {
+        contact,
+        listingId,
+      };
+    },
     async removeContact(_, { input }, { user }) {
       const { id, listingId } = input;
 

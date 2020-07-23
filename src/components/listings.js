@@ -11,66 +11,18 @@ import {
   Tag,
   TagLabel,
   Modal,
-  ModalBody,
   ModalHeader,
-  ModalFooter,
   ModalOverlay,
   ModalContent,
   ModalCloseButton,
   useDisclosure,
-  Input,
-  Textarea,
 } from "@chakra-ui/core";
 import { AnimatePresence, motion } from "framer-motion";
 import { GET_LISTINGS } from "../utils";
 import ListingMenu from "./listing-menu";
 import CompanySelect from "./company-select";
-import ContactSelect from "./contact-select";
+import ContactForm from "./contact-form";
 import RemoveContactButton from "./remove-contact-button";
-
-function CreateOrSelectContact(props) {
-  const [contactId, setContactId] = useState("");
-
-  function handleContactChange(event) {
-    setContactId(event.target.value);
-  }
-
-  return (
-    <AnimatePresence>
-      <Stack {...props}>
-        <ContactSelect
-          name="contactId"
-          value={contactId}
-          onChange={handleContactChange}
-        >
-          <option value="">Select a contact</option>
-          <option value="new">Create new contact</option>
-        </ContactSelect>
-        {contactId === "new" && (
-          <motion.div
-            animate={{
-              y: 0,
-              opacity: 1,
-            }}
-            exit={{
-              y: -10,
-              opacity: 0,
-            }}
-            initial={{
-              y: -10,
-              opacity: 0,
-            }}
-          >
-            <Stack {...props}>
-              <Input placeholder="Contact name" name="name" />
-              <Textarea placeholder="Contact notes" name="notes" />
-            </Stack>
-          </motion.div>
-        )}
-      </Stack>
-    </AnimatePresence>
-  );
-}
 
 function AddContactButton(props) {
   const { isOpen, onClose, onOpen } = useDisclosure();
@@ -92,12 +44,7 @@ function AddContactButton(props) {
         <ModalContent>
           <ModalHeader>Add a contact</ModalHeader>
           <ModalCloseButton />
-          <ModalBody>
-            <CreateOrSelectContact />
-          </ModalBody>
-          <ModalFooter>
-            <Button>Add contact</Button>
-          </ModalFooter>
+          <ContactForm onCompleted={onClose} listingId={props.listingId} />
         </ModalContent>
       </Modal>
     </>
@@ -177,7 +124,7 @@ export default function Listings() {
                             />
                           </Tag>
                         ))}
-                        <AddContactButton />
+                        <AddContactButton listingId={listing.id} />
                       </Stack>
                     )}
                   </Box>
